@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import api from "../api.ts"
+import api from "../utils/api.ts"
 
 const AiKitchenPage = () => {
     const [chatPrompt, setChatPrompt] = useState('');
