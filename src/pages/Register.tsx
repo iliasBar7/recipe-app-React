@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../utils/publicApi.ts";
+import api from "../utils/registerPublicApi.ts";
 import { Home } from "lucide-react";
 import { z } from "zod";
 
-//  Zod schema for validation
+// Zod schema for validation
 const registerSchema = z.object({
     username: z.string().min(3, "Username is required"),
-    email: z.email({ message: "Invalid email address" }),
+    email: z.email( "Email is required"),
     password: z
         .string()
         .regex(
@@ -36,7 +36,7 @@ export default function Register() {
         const result = registerSchema.safeParse(formData);
 
         if (!result.success) {
-            const firstError = result.error?.message;
+            const firstError = result.error.message;
             setError(firstError || "Invalid input");
             return;
         }
@@ -50,60 +50,68 @@ export default function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 to-white px-6">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
             <form
                 onSubmit={handleSubmit}
-                className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md"
+                className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in-up"
             >
-                <h2 className="text-3xl font-bold text-purple-600 mb-6 text-center">Create Account</h2>
-
-                {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-
-                <input
-                    type="text"
-                    name="username"
-                    placeholder="Username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    className="w-full mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
-
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
-
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full mb-6 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
-
-                <button
-                    type="submit"
-                    className="w-full bg-purple-500 text-white py-2 rounded-lg font-semibold hover:bg-purple-600 transition"
-                >
-                    Register
-                </button>
-
-                <p className="mt-4 text-center text-sm text-gray-600">
-                    Already have an account?{" "}
-                    <span
-                        onClick={() => navigate("/login")}
-                        className="text-purple-500 hover:underline cursor-pointer"
-                    >
-            Login
-          </span>
+                <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-6">
+                    Create Account ✨
+                </h2>
+                <p className="text-center text-gray-500 mb-8">
+                    Sign up to start your journey with <span className="font-semibold">AI Kitchen</span>
                 </p>
 
-                {/* Go to Home Button */}
+                {error && <p className="text-red-500 text-center text-sm mb-4">{error}</p>}
+
+                <div className="space-y-4">
+                    <input
+                        type="text"
+                        name="username"
+                        placeholder="Username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none transition"
+                    />
+
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none transition"
+                    />
+
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none transition"
+                    />
+
+                    <button
+                        type="submit"
+                        className="w-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white py-3 rounded-lg font-semibold shadow-lg hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                        Register
+                    </button>
+                </div>
+
+                <p className="text-center text-gray-500 text-sm mt-6">
+                    Already have an account?{" "}
+                    <button
+                        type="button"
+                        onClick={() => navigate("/login")}
+                        className="text-indigo-500 hover:underline font-medium"
+                    >
+                        Login
+                    </button>
+                </p>
+
+                {/* Go to Home */}
                 <div className="mt-6 flex justify-center">
                     <button
                         type="button"

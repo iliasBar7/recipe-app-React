@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LogIn, UserPlus, ChefHat } from "lucide-react"; // Lucide icons
+import { LogIn, UserPlus} from "lucide-react"; // Lucide icons
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -35,13 +35,7 @@ export default function HomePage() {
                         <UserPlus size={20} />
                         Register
                     </button>
-                    <button
-                        onClick={() => navigate("/create-recipe")}
-                        className="flex items-center justify-center gap-2 bg-green-500 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-green-600 transition"
-                    >
-                        <ChefHat size={20} />
-                        Create Recipe
-                    </button>
+
                 </div>
             </div>
         </div>

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
+import api from "../utils/api.ts";
 
 type Recipe = {
-    id: string;
+    id?: number;
     title: string;
     description: string;
     ingredients: string[];
@@ -15,7 +15,6 @@ export default function CreateRecipePage() {
     const navigate = useNavigate();
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [form, setForm] = useState<Recipe>({
-        id: "",
         title: "",
         description: "",
         ingredients: [],
@@ -23,18 +22,21 @@ export default function CreateRecipePage() {
     });
     const [isEditing, setIsEditing] = useState(false);
 
-    // Load recipes from localStorage
     useEffect(() => {
-        const stored = localStorage.getItem("recipes");
-        if (stored) setRecipes(JSON.parse(stored));
+        const fetchRecipes = async () => {
+            try {
+                const res = await api.get("/recipes/get-all");
+                setRecipes(res.data);
+            } catch (err) {
+                console.error("Error loading recipes:", err);
+            }
+        };
+        fetchRecipes();
     }, []);
 
-    // Save recipes to localStorage
-    useEffect(() => {
-        localStorage.setItem("recipes", JSON.stringify(recipes));
-    }, [recipes]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
@@ -42,38 +44,54 @@ export default function CreateRecipePage() {
         setForm({ ...form, ingredients: e.target.value.split(",") });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (isEditing) {
-            setRecipes(recipes.map(r => (r.id === form.id ? form : r)));
-        } else {
-            setRecipes([...recipes, { ...form, id: uuidv4() }]);
+        try {
+            const { ...newRecipe } = form;
+            const payload = {
+                ...newRecipe,
+                ingredients: form.ingredients.join(", "),
+            };
+            const res = await api.post("/recipes", payload);
+            setRecipes([...recipes, res.data]);
+            setForm({ title: "", description: "", ingredients: [], instructions: "" });
+            setIsEditing(false);
+        } catch (err) {
+            console.error("Error saving recipe:", err);
         }
-        setForm({ id: "", title: "", description: "", ingredients: [], instructions: "" });
-        setIsEditing(false);
     };
 
-    const handleEdit = (id: string) => {
-        const recipe = recipes.find(r => r.id === id);
-        if (recipe) {
-            setForm(recipe);
+    const handleEdit = async (id: number) => {
+        try {
+            const res = await api.get(`/recipes/${id}`);
+            setForm(res.data);
             setIsEditing(true);
+        } catch (err) {
+            console.error("Error loading recipe:", err);
         }
     };
 
-    const handleDelete = (id: string) => {
-        setRecipes(recipes.filter(r => r.id !== id));
+    const handleDelete = async (id: number) => {
+        try {
+            await api.delete(`/recipes/${id}`);
+            setRecipes(recipes.filter((r) => r.id !== id));
+        } catch (err) {
+            console.error("Error deleting recipe:", err);
+        }
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-white to-indigo-50 px-6 py-10">
-            <h1 className="text-4xl font-bold text-center text-indigo-600 mb-4">Create Your Recipe 🍲</h1>
+        <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 px-6 py-10 animate-fade-in flex flex-col items-center">
+            {/* Page Title */}
+            <h1 className="text-4xl font-extrabold text-white drop-shadow-lg mb-6 text-center">
+                Create Your Recipe 🍲
+            </h1>
 
             {/* 🏠 Home Button */}
-            <div className="flex justify-center mb-6">
+            <div className="mb-8">
                 <button
                     onClick={() => navigate("/")}
-                    className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition"
+                    className="flex items-center gap-2 bg-white/80 backdrop-blur-sm hover:bg-white text-gray-800 px-5 py-2 rounded-lg shadow-lg transition-all"
                 >
                     <Home size={18} />
                     Go to Home
@@ -83,9 +101,11 @@ export default function CreateRecipePage() {
             {/* 📝 Recipe Form */}
             <form
                 onSubmit={handleSubmit}
-                className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg mb-12 border border-indigo-100"
+                className="w-full max-w-3xl bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl mb-12 animate-fade-in-up"
             >
-                <h2 className="text-2xl font-semibold text-indigo-600 mb-6 text-center">Recipe Details</h2>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+                    Recipe Details
+                </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -95,7 +115,7 @@ export default function CreateRecipePage() {
                             value={form.title}
                             onChange={handleChange}
                             placeholder="e.g. Spaghetti Carbonara"
-                            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none transition"
                             required
                         />
                     </div>
@@ -107,7 +127,7 @@ export default function CreateRecipePage() {
                             value={form.description}
                             onChange={handleChange}
                             placeholder="A creamy pasta dish with pancetta and parmesan"
-                            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none transition"
                             rows={3}
                         />
                     </div>
@@ -119,7 +139,7 @@ export default function CreateRecipePage() {
                             value={form.ingredients.join(",")}
                             onChange={handleIngredientsChange}
                             placeholder="e.g. eggs, pancetta, parmesan, spaghetti"
-                            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none transition"
                         />
                     </div>
 
@@ -130,7 +150,7 @@ export default function CreateRecipePage() {
                             value={form.instructions}
                             onChange={handleChange}
                             placeholder="Step-by-step cooking instructions..."
-                            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none transition"
                             rows={6}
                         />
                     </div>
@@ -138,30 +158,39 @@ export default function CreateRecipePage() {
 
                 <button
                     type="submit"
-                    className="mt-8 w-full bg-indigo-500 text-white py-3 rounded-lg font-semibold hover:bg-indigo-600 transition-transform transform hover:scale-[1.02]"
+                    className="mt-8 w-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white py-3 rounded-lg font-semibold shadow-lg hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200"
                 >
                     {isEditing ? "Update Recipe" : "Add Recipe"}
                 </button>
             </form>
 
-
             {/* 📋 Recipe List */}
-            <div className="max-w-2xl mx-auto">
-                {recipes.map(recipe => (
-                    <div key={recipe.id} className="bg-white border p-4 rounded-lg mb-4 shadow-sm">
+            <div className="w-full max-w-2xl space-y-4">
+                {recipes.map((recipe) => (
+                    <div
+                        key={recipe.id}
+                        className="bg-white/90 backdrop-blur-sm border border-gray-200 p-6 rounded-xl shadow-lg animate-fade-in-up"
+                    >
                         <h2 className="text-xl font-bold text-indigo-700">{recipe.title}</h2>
                         <p className="text-gray-600">{recipe.description}</p>
-                        <p className="text-sm mt-2"><strong>Ingredients:</strong> {recipe.ingredients.join(", ")}</p>
-                        <p className="text-sm mt-2"><strong>Instructions:</strong> {recipe.instructions}</p>
+                        <p className="text-sm mt-2">
+                            <strong>Ingredients:</strong>{" "}
+                            {Array.isArray(recipe.ingredients)
+                                ? recipe.ingredients.join(", ")
+                                : String(recipe.ingredients)}
+                        </p>
+                        <p className="text-sm mt-2">
+                            <strong>Instructions:</strong> {recipe.instructions}
+                        </p>
                         <div className="mt-4 flex gap-2">
                             <button
-                                onClick={() => handleEdit(recipe.id)}
+                                onClick={() => handleEdit(recipe.id!)}
                                 className="bg-yellow-400 text-white px-4 py-1 rounded hover:bg-yellow-500"
                             >
                                 Edit
                             </button>
                             <button
-                                onClick={() => handleDelete(recipe.id)}
+                                onClick={() => handleDelete(recipe.id!)}
                                 className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600"
                             >
                                 Delete

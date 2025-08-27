@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Home } from "lucide-react";
+import api from "../utils/api.ts";
 
 type Recipe = {
     id: string;
@@ -16,13 +17,17 @@ export default function RecipeViewPage() {
     const [recipe, setRecipe] = useState<Recipe | null>(null);
 
     useEffect(() => {
-        const stored = localStorage.getItem("recipes");
-        if (stored) {
-            const recipes: Recipe[] = JSON.parse(stored);
-            const found = recipes.find(r => r.id === id);
-            if (found) setRecipe(found);
-        }
+        const fetchRecipe = async () => {
+            try {
+                const res = await api.get(`/recipes/${id}`);
+                setRecipe(res.data);
+            } catch (err) {
+                console.error("Error fetching recipe:", err);
+            }
+        };
+        fetchRecipe();
     }, [id]);
+
 
     if (!recipe) {
         return (
