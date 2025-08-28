@@ -14,11 +14,22 @@ export default function Login() {
                 username,
                 password,
             });
-            const token = res.data.token;
+
+
+            const { token, username: returnedUsername } = res.data;
+
+            if (!token || !returnedUsername) {
+                throw new Error("Missing token or username in response");
+            }
+
+
             localStorage.setItem("token", token);
+            localStorage.setItem("username", returnedUsername);
+
             setError("");
             navigate("/ai-kitchen");
         } catch (err) {
+            console.error("Login error:", err);
             setError("Invalid username or password");
         }
     };

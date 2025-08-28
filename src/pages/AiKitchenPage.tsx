@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Home, Copy, Check } from "lucide-react";
 import auth from "../utils/auth.ts";
+
 
 const AiKitchenPage = () => {
     const navigate = useNavigate();
@@ -11,20 +13,37 @@ const AiKitchenPage = () => {
     const [cuisine, setCuisine] = useState('');
     const [dietaryRestrictions, setDietaryRestrictions] = useState('');
     const [recipeResponse, setRecipeResponse] = useState('');
+    const [username, setUsername] = useState('');
+    const [chatLoading, setChatLoading] = useState(false);
+    const [recipeLoading, setRecipeLoading] = useState(false);
+    const [chatCopied, setChatCopied] = useState(false);
+    const [recipeCopied, setRecipeCopied] = useState(false);
+
+    useEffect(() => {
+        // Get username from localStorage when component mounts
+        const storedUsername = localStorage.getItem("username") || "";
+        setUsername(storedUsername);
+    }, []);
 
     const handleChatSubmit = async () => {
         if (!chatPrompt.trim()) return;
+        setChatLoading(true);
+        setChatResponse('');
         try {
             const res = await auth.get("/ai-ask", { params: { prompt: chatPrompt } });
             setChatResponse(res.data);
         } catch (err) {
             console.log("Error asking AI: ", err);
             setChatResponse("Something went wrong! Please try again.");
+        } finally {
+            setChatLoading(false);
         }
     };
 
     const handleRecipeSubmit = async (e: { preventDefault: () => void }) => {
         e.preventDefault();
+        setRecipeLoading(true);
+        setRecipeResponse('');
         try {
             const res = await auth.get("/generate-recipe", {
                 params: { ingredients, cuisine, dietaryRestrictions },
@@ -33,11 +52,60 @@ const AiKitchenPage = () => {
         } catch (err) {
             console.log("Error asking AI:", err);
             setRecipeResponse("Oops! Something went wrong. Try again?");
+        } finally {
+            setRecipeLoading(false);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem("username");
+        localStorage.removeItem("token");
+        setUsername("");
+        navigate("/login");
+    };
+
+    const copyToClipboard = async (text: string, type: 'chat' | 'recipe') => {
+        try {
+            await navigator.clipboard.writeText(text);
+            if (type === 'chat') {
+                setChatCopied(true);
+                setTimeout(() => setChatCopied(false), 2000);
+            } else {
+                setRecipeCopied(true);
+                setTimeout(() => setRecipeCopied(false), 2000);
+            }
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
         }
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 flex flex-col items-center animate-fade-in">
+
+            {/* Top Bar with Home + User Info */}
+            <div className="w-full flex justify-between items-center mb-8 max-w-4xl">
+                <button
+                    onClick={() => navigate("/")}
+                    className="flex items-center gap-2 bg-white/80 backdrop-blur-sm hover:bg-white text-gray-800 px-5 py-2 rounded-lg shadow-lg transition-all"
+                >
+                    <Home size={18} />
+                    Go to Home
+                </button>
+
+                {username && (
+                    <div className="flex items-center gap-4 bg-white/80 px-4 py-2 rounded-lg shadow">
+                        <span className="font-medium text-gray-700">
+                            <strong>{username}</strong>
+                        </span>
+                        <button
+                            onClick={handleLogout}
+                            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
+                        >
+                            Logout
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {/* Page Title */}
             <h1 className="text-4xl font-extrabold text-white drop-shadow-lg mb-8 text-center">
@@ -66,18 +134,46 @@ const AiKitchenPage = () => {
                         className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none transition"
                         value={chatPrompt}
                         onChange={(e) => setChatPrompt(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && !chatLoading && handleChatSubmit()}
                     />
                     <button
-                        className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-lg shadow hover:opacity-90 transition"
+                        className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-lg shadow hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[80px]"
                         onClick={handleChatSubmit}
+                        disabled={!chatPrompt.trim() || chatLoading}
                     >
-                        Ask
+                        {chatLoading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>...</span>
+                            </>
+                        ) : (
+                            'Ask'
+                        )}
                     </button>
                 </div>
-                {chatResponse && (
-                    <p className="mt-4 text-gray-700 whitespace-pre-line animate-fade-in-up">
-                        {chatResponse}
-                    </p>
+                {chatLoading && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border animate-fade-in-up flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-500"></div>
+                        <span className="text-gray-600">AI is thinking...</span>
+                    </div>
+                )}
+                {chatResponse && !chatLoading && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-fade-in-up relative group">
+                        <p className="text-gray-700 whitespace-pre-line pr-10">
+                            {chatResponse}
+                        </p>
+                        <button
+                            onClick={() => copyToClipboard(chatResponse, 'chat')}
+                            className="absolute top-3 right-3 p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-all opacity-0 group-hover:opacity-100"
+                            title="Copy to clipboard"
+                        >
+                            {chatCopied ? (
+                                <Check size={16} className="text-green-500" />
+                            ) : (
+                                <Copy size={16} className="text-gray-500" />
+                            )}
+                        </button>
+                    </div>
                 )}
             </section>
 
@@ -93,6 +189,7 @@ const AiKitchenPage = () => {
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 outline-none transition"
                         value={ingredients}
                         onChange={(e) => setIngredients(e.target.value)}
+                        required
                     />
                     <input
                         type="text"
@@ -110,15 +207,35 @@ const AiKitchenPage = () => {
                     />
                     <button
                         type="submit"
-                        className="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white py-3 rounded-lg font-semibold shadow-lg hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200"
+                        className="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white py-3 rounded-lg font-semibold shadow-lg hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        disabled={!ingredients.trim()}
                     >
                         Generate Recipe
                     </button>
                 </form>
-                {recipeResponse && (
-                    <p className="mt-4 text-gray-700 whitespace-pre-line animate-fade-in-up">
-                        {recipeResponse}
-                    </p>
+                {recipeLoading && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border animate-fade-in-up flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
+                        <span className="text-gray-600">Creating your perfect recipe...</span>
+                    </div>
+                )}
+                {recipeResponse && !recipeLoading && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-fade-in-up relative group">
+                        <p className="text-gray-700 whitespace-pre-line pr-10">
+                            {recipeResponse}
+                        </p>
+                        <button
+                            onClick={() => copyToClipboard(recipeResponse, 'recipe')}
+                            className="absolute top-3 right-3 p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-all opacity-0 group-hover:opacity-100"
+                            title="Copy to clipboard"
+                        >
+                            {recipeCopied ? (
+                                <Check size={16} className="text-green-500" />
+                            ) : (
+                                <Copy size={16} className="text-gray-500" />
+                            )}
+                        </button>
+                    </div>
                 )}
             </section>
         </div>
