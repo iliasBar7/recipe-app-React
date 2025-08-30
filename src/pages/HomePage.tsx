@@ -6,12 +6,12 @@ export default function HomePage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-purple-100 to-white flex items-center justify-center px-6 relative overflow-hidden">
-            {/* ✨ Animated Background Blobs */}
+            {/*  Animated Background Blobs */}
             <div className="absolute top-0 left-0 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob"></div>
             <div className="absolute top-0 right-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob animation-delay-2000"></div>
             <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob animation-delay-4000"></div>
 
-            {/* ✨ Main Content */}
+            {/*  Main Content */}
             <div className="max-w-xl text-center z-10">
                 <h1 className="text-5xl font-extrabold text-indigo-600 mb-4 drop-shadow-lg">
                     Welcome to AI Kitchen 🍳

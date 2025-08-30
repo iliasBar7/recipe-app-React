@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState,useEffect  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Copy, Check } from "lucide-react";
-import auth from "../utils/auth.ts";
+import api from "../utils/api.ts";
+
 
 
 const AiKitchenPage = () => {
@@ -20,7 +21,7 @@ const AiKitchenPage = () => {
     const [recipeCopied, setRecipeCopied] = useState(false);
 
     useEffect(() => {
-        // Get username from localStorage when component mounts
+
         const storedUsername = localStorage.getItem("username") || "";
         setUsername(storedUsername);
     }, []);
@@ -30,7 +31,7 @@ const AiKitchenPage = () => {
         setChatLoading(true);
         setChatResponse('');
         try {
-            const res = await auth.get("/ai-ask", { params: { prompt: chatPrompt } });
+            const res = await api.get("/ai-ask", { params: { prompt: chatPrompt } });
             setChatResponse(res.data);
         } catch (err) {
             console.log("Error asking AI: ", err);
@@ -45,7 +46,7 @@ const AiKitchenPage = () => {
         setRecipeLoading(true);
         setRecipeResponse('');
         try {
-            const res = await auth.get("/generate-recipe", {
+            const res = await api.get("/generate-recipe", {
                 params: { ingredients, cuisine, dietaryRestrictions },
             });
             setRecipeResponse(res.data);

@@ -6,7 +6,7 @@ type Recipe = {
     id?: number;
     title: string;
     description: string;
-    ingredients: string; // now simple string
+    ingredients: string;
     instructions: string;
     username: string;
 };

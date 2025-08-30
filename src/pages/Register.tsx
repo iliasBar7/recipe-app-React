@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../utils/registerPublicApi.ts";
 import { Home } from "lucide-react";
 import { z } from "zod";
+import registerPublicApi from "../utils/registerPublicApi.ts";
 
-// Zod schema for validation
+
 const registerSchema = z.object({
     username: z.string().min(3, "Username is required"),
     email: z.email( "Email is required"),
@@ -42,7 +42,7 @@ export default function Register() {
         }
 
         try {
-            await api.post("/users/register", formData);
+            await registerPublicApi.post("/users/register", formData);
             navigate("/login");
         } catch (err: any) {
             setError(err.response?.data?.message || "Registration failed");
@@ -111,7 +111,7 @@ export default function Register() {
                     </button>
                 </p>
 
-                {/* Go to Home */}
+
                 <div className="mt-6 flex justify-center">
                     <button
                         type="button"
